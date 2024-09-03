@@ -75,21 +75,12 @@ export const ExperimentsEditingToolbarMenu = (): JSX.Element => {
                 </ToolbarMenu.Header>
                 <ToolbarMenu.Body>
                     <div className="p-1">
-                        <div>
-                            <p>Name your experiment</p>
-                            <Field name="name">
-                                <LemonInput
-                                    placeholder="E.g: Hero banner redesign"
-                                    className="action-title-field"
-                                    stopPropagation={true}
-                                    value={experimentForm.name}
-                                />
-                            </Field>
-                        </div>
-                        <Group name='variants'>
-                            <LemonDivider/>
-                            <h4> Variants </h4>
-                            <div className="mt-2">
+                        <div className="flex">
+                            <EditableField
+                                onSave={(newName) => {
+                                    experimentForm.name = newName
+                                }}
+                                name="item-name-small" value={experimentForm.name} />
                                 <LemonButton
                                     type="secondary"
                                     size="small"
@@ -106,12 +97,16 @@ export const ExperimentsEditingToolbarMenu = (): JSX.Element => {
                                         setExperimentFormValue('variants', experimentForm.variants)
                                     }}
                                 >
-                                    Add Another Variant ({selectedExperimentId})
+                                    Variants
                                 </LemonButton>
+                        </div>
+                        <Group name='variants'>
+                            <LemonDivider/>
+
+                            <div className="mt-2">
                                 {Object.keys(experimentForm.variants!).map((variant, index) => (
                                     <Group key={variant} name={['variants', index]}>
                                         <div className="p-1 flex flex-col gap-2">
-
                                                 {selectedExperimentId === 'new' && (
                                                     <EditableField
                                                         onSave={(newName) => {
@@ -175,30 +170,32 @@ export const ExperimentsEditingToolbarMenu = (): JSX.Element => {
                                                         setExperimentFormValue('variants', experimentForm.variants)
                                                 }}}
                                             >
-                                                Add Another Element
+                                                Elements
                                             </LemonButton>
                                             <LemonDivider/>
-
                                             {experimentForm.variants![variant].transforms.map((transform, tIndex) => (
-                                                <div key={tIndex}> {transform.selector}
-                                                        <div className="action-inspect">
-                                                            <LemonButton
-                                                                size="small"
-                                                                type={inspectingElement === tIndex ? 'primary' : 'secondary'}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    selectVariant(variant)
-                                                                    console.log(`calling inspectForElementWithIndex(${variant}, ${tIndex +1})`)
-                                                                    inspectForElementWithIndex(variant, tIndex +1)
-                                                                }}
-                                                                icon={<IconSearch />}
-                                                            >
-                                                                {transform.selector ? 'Change Element' : 'Select Element'}
-                                                            </LemonButton>
-                                                            <LemonButton
+                                                <div key={tIndex}>
+                                                    <span>
+                                                        {tIndex + 1} ) {transform.selector}
+                                                    </span>
+                                                    <div className="flex p-1 flex-col-3">
+                                                        <LemonButton
+                                                            size="small"
+                                                            type={inspectingElement === tIndex ? 'primary' : 'secondary'}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                selectVariant(variant)
+                                                                console.log(`calling inspectForElementWithIndex(${variant}, ${tIndex + 1})`)
+                                                                inspectForElementWithIndex(variant, tIndex + 1)
+                                                            }}
+                                                            icon={<IconSearch/>}
+                                                        >
+                                                            {transform.selector ? 'Change Element' : 'Select Element'}
+                                                        </LemonButton>
+                                                        <LemonButton
                                                             type="tertiary"
                                                             size="small"
-                                                            onClick={(e)=> {
+                                                            onClick={(e) => {
                                                                 e.stopPropagation()
                                                                 if (experimentForm.variants) {
                                                                     const webVariant = experimentForm.variants[variant]
@@ -208,39 +205,39 @@ export const ExperimentsEditingToolbarMenu = (): JSX.Element => {
                                                                     }
                                                                 }
                                                             }}
-                                                            sideIcon={<IconTrash />}
-                                                        >
-                                            Remove
-                                        </LemonButton>
-                                                            <WebExperimentTransformField tIndex={tIndex} variant={variant} transform={transform} />
+                                                            sideIcon={<IconTrash/>}>
+                                                            Remove
+                                                        </LemonButton>
+                                                    </div>
+                                                    <WebExperimentTransformField tIndex={tIndex} variant={variant}
+                                                                                 transform={transform}/>
 
-                                                            {inspectingElement === tIndex ? (
-                                                                <>
-                                                                    <div className="flex flex-row justify-end mb-2">
-                                                                        <LemonButton
-                                                                            size="small"
-                                                                            type="secondary"
-                                                                            icon={<IconPencil />}
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation()
-                                                                                toolbarPosthogJS.capture(
-                                                                                    'toolbar_manual_selector_modal_opened',
-                                                                                    {
-                                                                                        selector: transform.selector,
-                                                                                    }
-                                                                                )
-                                                                                editSelectorWithIndex(variant, tIndex)
-                                                                            }}
-                                                                        >
-                                                                            Edit the selector
-                                                                        </LemonButton>
-                                                                    </div>
-                                                                </>
-                                                            ): null}
-                                                        </div>
-                                                   </div>
+                                                    {inspectingElement === tIndex ? (
+                                                        <>
+                                                            <div className="flex flex-row justify-end mb-2">
+                                                                <LemonButton
+                                                                    size="small"
+                                                                    type="secondary"
+                                                                    icon={<IconPencil/>}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        toolbarPosthogJS.capture(
+                                                                            'toolbar_manual_selector_modal_opened',
+                                                                            {
+                                                                                selector: transform.selector,
+                                                                            }
+                                                                        )
+                                                                        editSelectorWithIndex(variant, tIndex)
+                                                                    }}
+                                                                >
+                                                                    Edit the selector
+                                                                </LemonButton>
+                                                            </div>
+                                                        </>
+                                                    ) : null}
+                                                </div>
                                             ))}
-                                            </div>
+                                        </div>
                                     </Group>
                                 ))}
                             </div>

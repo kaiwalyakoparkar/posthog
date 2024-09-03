@@ -48,44 +48,6 @@ class ExperimentsAPISerializer(serializers.ModelSerializer):
     class Meta:
         model = WebExperiment
         fields = ["id", "name", "feature_flag_key", "variants"]
-        # read_only_fields = fields
-
-    # def get_variants(self, experiment: Experiment):
-    #     if experiment.feature_flag is None:
-    #         return
-    #     #
-    #     if experiment.feature_flag.filters is None:
-    #         return
-    #
-    #     multivariate = experiment.feature_flag.filters.get("multivariate", None)
-    #     if multivariate is None:
-    #         return
-    #
-    #     variants = multivariate.get("variants", [])
-    #     if len(variants) == 0:
-    #         return
-    #
-    #     payloads = experiment.feature_flag.filters.get("payloads", {})
-    #     if len(payloads) == 0:
-    #         return
-    #
-    #     if not isinstance(payloads, dict):
-    #         return
-    #
-    #     for variant in variants:
-    #         rollout_percentage = variant.get("rollout_percentage",0)
-    #         key = variant.get("key", None)
-    #         # print('variant is ', key, '  rollout_percentage is ', rollout_percentage, '  payload is ', payloads)
-    #         serializer_payload = {
-    #             'data': payloads.get(key, None),
-    #             'rollout_percentage': rollout_percentage
-    #         }
-    #         variant_transforms_payload = ExperimentTransformSerializer(serializer_payload)
-    #         # variant_transforms_payload.rollout_percentage = rollout_percentage
-    #         payloads[key] = variant_transforms_payload.data
-    #         # payloads[key].
-    #         payloads[key].rollout_percentage = rollout_percentage
-    #     return payloads
 
     def validate(self, attrs):
         print('input to REST API is ', attrs)
