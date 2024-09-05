@@ -2,9 +2,9 @@ from typing import Any, cast
 import unittest
 
 from freezegun import freeze_time
-from rest_framework.exceptions import ValidationError
 
 from posthog.constants import INSIGHT_FUNNELS
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql_queries.insights.funnels.funnel_correlation_query_runner import (
     EventContingencyTable,
     EventStats,
@@ -1189,14 +1189,14 @@ class TestClickhouseFunnelCorrelation(ClickhouseTestMixin, APIBaseTest):
         )
         flush_persons_and_events()
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ExposedHogQLError):
             self._get_events_for_filters(
                 filters,
                 funnelCorrelationType=FunnelCorrelationResultsType.PROPERTIES,
                 # funnelCorrelationNames=["$browser"] -- missing
             )
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ExposedHogQLError):
             self._get_events_for_filters(
                 filters,
                 funnelCorrelationType=FunnelCorrelationResultsType.EVENT_WITH_PROPERTIES,

@@ -4,6 +4,7 @@ from typing import cast
 from rest_framework.exceptions import ValidationError
 
 from posthog.constants import INSIGHT_FUNNELS, FunnelOrderType
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql_queries.insights.funnels.funnels_query_runner import FunnelsQueryRunner
 from posthog.hogql_queries.legacy_compatibility.filter_to_query import filter_to_query
 
@@ -1147,7 +1148,7 @@ class TestFunnelUnorderedSteps(ClickhouseTestMixin, APIBaseTest):
         }
 
         query = cast(FunnelsQuery, filter_to_query(filters))
-        self.assertRaises(ValidationError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
+        self.assertRaises(ExposedHogQLError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
 
     def test_funnel_exclusions_full_window(self):
         filters = {

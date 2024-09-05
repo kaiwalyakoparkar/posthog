@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from posthog.api.instance_settings import get_instance_setting
 from posthog.clickhouse.client.execute import sync_execute
 from posthog.constants import INSIGHT_FUNNELS, FunnelOrderType, FunnelVizType
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.modifiers import create_default_modifiers_for_team
 from posthog.hogql.query import execute_hogql_query
 from posthog.hogql_queries.actors_query_runner import ActorsQueryRunner
@@ -1942,7 +1943,7 @@ def funnel_test_factory(Funnel, event_factory, person_factory):
                 ],
             }
             query = cast(FunnelsQuery, filter_to_query(filters))
-            self.assertRaises(ValidationError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
+            self.assertRaises(ExposedHogQLError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
 
         def test_funnel_exclusion_no_end_event(self):
             filters = {

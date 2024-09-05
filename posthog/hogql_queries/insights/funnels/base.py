@@ -195,7 +195,7 @@ class FunnelBase(ABC):
         elif breakdownType == "data_warehouse_person_property" and isinstance(breakdown, str):
             return ast.Field(chain=["person", *breakdown.split(".")])
         else:
-            raise ExposedHogQLError(detail=f"Unsupported breakdown type: {breakdownType}")
+            raise ExposedHogQLError(f"Unsupported breakdown type: {breakdownType}")
 
     def _format_results(
         self, results
