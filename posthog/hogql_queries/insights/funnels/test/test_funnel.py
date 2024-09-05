@@ -4,7 +4,6 @@ from typing import cast
 
 from django.test import override_settings
 from freezegun import freeze_time
-from rest_framework.exceptions import ValidationError
 
 from posthog.api.instance_settings import get_instance_setting
 from posthog.clickhouse.client.execute import sync_execute
@@ -1901,7 +1900,7 @@ def funnel_test_factory(Funnel, event_factory, person_factory):
             }
 
             query = cast(FunnelsQuery, filter_to_query(filters))
-            self.assertRaises(ValidationError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
+            self.assertRaises(ExposedHogQLError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
 
             filters = {
                 **filters,
@@ -1915,7 +1914,7 @@ def funnel_test_factory(Funnel, event_factory, person_factory):
                 ],
             }
             query = cast(FunnelsQuery, filter_to_query(filters))
-            self.assertRaises(ValidationError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
+            self.assertRaises(ExposedHogQLError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
 
             filters = {
                 **filters,
@@ -1929,7 +1928,7 @@ def funnel_test_factory(Funnel, event_factory, person_factory):
                 ],
             }
             query = cast(FunnelsQuery, filter_to_query(filters))
-            self.assertRaises(ValidationError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
+            self.assertRaises(ExposedHogQLError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
 
             filters = {
                 **filters,
