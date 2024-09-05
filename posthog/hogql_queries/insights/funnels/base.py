@@ -3,11 +3,11 @@ from abc import ABC
 from functools import cached_property
 from typing import Any, Optional, Union, cast
 
-from rest_framework.exceptions import ValidationError
 
 from posthog.clickhouse.materialized_columns.column import ColumnName
 from posthog.hogql import ast
 from posthog.hogql.constants import get_breakdown_limit_for_context
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.parser import parse_expr, parse_select
 from posthog.hogql.property import action_to_expr, property_to_expr
 from posthog.hogql_queries.insights.funnels.funnel_aggregation_operations import FirstTimeForUserAggregationQuery
@@ -61,23 +61,23 @@ class FunnelBase(ABC):
         if self.context.funnelsFilter.exclusions is not None:
             for exclusion in self.context.funnelsFilter.exclusions:
                 if exclusion.funnelFromStep >= exclusion.funnelToStep:
-                    raise ValidationError(
+                    raise ExposedHogQLError(
                         "Exclusion event range is invalid. End of range should be greater than start."
                     )
 
                 if exclusion.funnelFromStep >= len(self.context.query.series) - 1:
-                    raise ValidationError(
+                    raise ExposedHogQLError(
                         "Exclusion event range is invalid. Start of range is greater than number of steps."
                     )
 
                 if exclusion.funnelToStep > len(self.context.query.series) - 1:
-                    raise ValidationError(
+                    raise ExposedHogQLError(
                         "Exclusion event range is invalid. End of range is greater than number of steps."
                     )
 
                 for entity in self.context.query.series[exclusion.funnelFromStep : exclusion.funnelToStep + 1]:
                     if is_equal(entity, exclusion) or is_superset(entity, exclusion):
-                        raise ValidationError("Exclusion steps cannot contain an event that's part of funnel steps.")
+                        raise ExposedHogQLError("Exclusion steps cannot contain an event that's part of funnel steps.")
 
     def get_query(self) -> ast.SelectQuery:
         raise NotImplementedError()
@@ -195,7 +195,7 @@ class FunnelBase(ABC):
         elif breakdownType == "data_warehouse_person_property" and isinstance(breakdown, str):
             return ast.Field(chain=["person", *breakdown.split(".")])
         else:
-            raise ValidationError(detail=f"Unsupported breakdown type: {breakdownType}")
+            raise ExposedHogQLError(detail=f"Unsupported breakdown type: {breakdownType}")
 
     def _format_results(
         self, results
@@ -299,7 +299,7 @@ class FunnelBase(ABC):
             action_id = step.event
             type = "events"
         elif isinstance(step, DataWarehouseNode):
-            raise ValidationError(
+            raise ExposedHogQLError(
                 "Data warehouse tables are not supported in funnels just yet. For now, please try this funnel without the data warehouse-based step."
             )
         else:
@@ -396,7 +396,7 @@ class FunnelBase(ABC):
 
         if breakdown and breakdownType == BreakdownType.COHORT:
             if funnel_events_query.select_from is None:
-                raise ValidationError("Apologies, there was an error adding cohort breakdowns to the query.")
+                raise ExposedHogQLError("Apologies, there was an error adding cohort breakdowns to the query.")
             funnel_events_query.select_from.next_join = self._get_cohort_breakdown_join()
 
         if not skip_step_filter:
@@ -586,7 +586,7 @@ class FunnelBase(ABC):
             action = Action.objects.get(pk=int(entity.id), team=self.context.team)
             event_expr = action_to_expr(action)
         elif isinstance(entity, DataWarehouseNode):
-            raise ValidationError(
+            raise ExposedHogQLError(
                 "Data warehouse tables are not supported in funnels just yet. For now, please try this funnel without the data warehouse-based step."
             )
         elif entity.event is None:

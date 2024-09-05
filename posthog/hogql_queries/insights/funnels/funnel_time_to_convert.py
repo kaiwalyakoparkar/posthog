@@ -1,7 +1,6 @@
-from rest_framework.exceptions import ValidationError
-
 from posthog.constants import FUNNEL_TO_STEP
 from posthog.hogql import ast
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.parser import parse_select
 from posthog.hogql_queries.insights.funnels.base import FunnelBase
 from posthog.hogql_queries.insights.funnels.funnel_query_context import FunnelQueryContext
@@ -54,7 +53,7 @@ class FunnelTimeToConvert(FunnelBase):
             """
 
         if not (0 < to_step < len(query.series)):
-            raise ValidationError(
+            raise ExposedHogQLError(
                 f'Filter parameter {FUNNEL_TO_STEP} can only be one of {", ".join(map(str, range(1, len(query.series))))} for time to convert!'
             )
 

@@ -1,8 +1,8 @@
 from posthog.hogql import ast
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.parser import parse_expr
 from posthog.hogql_queries.insights.funnels.base import FunnelBase
 
-from rest_framework.exceptions import ValidationError
 from posthog.schema import BreakdownType
 
 
@@ -68,7 +68,7 @@ class Funnel(FunnelBase):
     def get_step_counts_without_aggregation_query(self):
         max_steps = self.context.max_steps
         if max_steps < 2:
-            raise ValidationError("Funnels require at least two steps before calculating.")
+            raise ExposedHogQLError("Funnels require at least two steps before calculating.")
 
         formatted_query = self._build_step_subquery(2, max_steps)
         breakdown_exprs = self._get_breakdown_prop_expr()

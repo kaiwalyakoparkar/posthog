@@ -1,8 +1,8 @@
 from posthog.constants import FUNNEL_WINDOW_INTERVAL_TYPES
 from posthog.hogql import ast
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.parser import parse_expr
 from posthog.schema import FunnelConversionWindowTimeUnit, FunnelVizType, FunnelsFilter, StepOrderValue
-from rest_framework.exceptions import ValidationError
 
 
 def get_funnel_order_class(funnelsFilter: FunnelsFilter):
@@ -56,7 +56,7 @@ def funnel_window_interval_unit_to_sql(
     elif funnelWindowIntervalUnit == "day":
         return "DAY"
     else:
-        raise ValidationError(f"{funnelWindowIntervalUnit} not supported")
+        raise ExposedHogQLError(f"{funnelWindowIntervalUnit} not supported")
 
 
 def get_breakdown_expr(

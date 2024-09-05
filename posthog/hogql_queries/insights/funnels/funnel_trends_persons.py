@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from rest_framework.exceptions import ValidationError
 
 from posthog.hogql import ast
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.parser import parse_expr
 from posthog.hogql_queries.insights.funnels.funnel_query_context import FunnelQueryContext
 from posthog.hogql_queries.insights.funnels.funnel_trends import FunnelTrends
@@ -19,19 +19,21 @@ class FunnelTrendsActors(FunnelTrends):
         team, actorsQuery = self.context.team, self.context.actorsQuery
 
         if actorsQuery is None:
-            raise ValidationError("No actors query present.")
+            raise ExposedHogQLError("No actors query present.")
 
         if actorsQuery.funnelTrendsDropOff is None:
-            raise ValidationError(f"Actors parameter `funnelTrendsDropOff` must be provided for funnel trends persons!")
+            raise ExposedHogQLError(
+                f"Actors parameter `funnelTrendsDropOff` must be provided for funnel trends persons!"
+            )
 
         if actorsQuery.funnelTrendsEntrancePeriodStart is None:
-            raise ValidationError(
+            raise ExposedHogQLError(
                 f"Actors parameter `funnelTrendsEntrancePeriodStart` must be provided funnel trends persons!"
             )
 
         entrancePeriodStart = relative_date_parse(actorsQuery.funnelTrendsEntrancePeriodStart, team.timezone_info)
         if entrancePeriodStart is None:
-            raise ValidationError(
+            raise ExposedHogQLError(
                 f"Actors parameter `funnelTrendsEntrancePeriodStart` must be a valid relative date string!"
             )
 

@@ -1,8 +1,8 @@
 from typing import Any, Optional
 import uuid
 
-from rest_framework.exceptions import ValidationError
 from posthog.hogql import ast
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.parser import parse_expr
 from posthog.hogql_queries.insights.funnels.base import FunnelBase
 from posthog.hogql_queries.insights.funnels.utils import funnel_window_interval_unit_to_sql
@@ -41,7 +41,7 @@ class FunnelUnordered(FunnelBase):
 
         for exclusion in self.context.funnelsFilter.exclusions or []:
             if exclusion.funnelFromStep != 0 or exclusion.funnelToStep != max_steps - 1:
-                raise ValidationError("Partial Exclusions not allowed in unordered funnels")
+                raise ExposedHogQLError("Partial Exclusions not allowed in unordered funnels")
 
         if self.context.breakdown and self.context.breakdownType in [
             BreakdownType.PERSON,

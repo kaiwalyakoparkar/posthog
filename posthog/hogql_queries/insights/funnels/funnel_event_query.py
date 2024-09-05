@@ -1,6 +1,7 @@
 from typing import Union, Optional
 from posthog.clickhouse.materialized_columns.column import ColumnName
 from posthog.hogql import ast
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.parser import parse_expr
 from posthog.hogql_queries.insights.funnels.funnel_query_context import FunnelQueryContext
 from posthog.hogql_queries.insights.utils.properties import Properties
@@ -14,7 +15,6 @@ from posthog.schema import (
     FunnelExclusionActionsNode,
     FunnelExclusionEventsNode,
 )
-from rest_framework.exceptions import ValidationError
 
 
 class FunnelEventQuery:
@@ -148,11 +148,11 @@ class FunnelEventQuery:
                     action = Action.objects.get(pk=int(node.id), team=team)
                     events.update(action.get_step_events())
                 except Action.DoesNotExist:
-                    raise ValidationError(f"Action ID {node.id} does not exist!")
+                    raise ExposedHogQLError(f"Action ID {node.id} does not exist!")
             elif isinstance(node, DataWarehouseNode):
                 continue  # Data warehouse nodes aren't based on events
             else:
-                raise ValidationError("Series and exclusions must be compose of action and event nodes")
+                raise ExposedHogQLError("Series and exclusions must be compose of action and event nodes")
 
         # Disable entity pre-filtering for "All events"
         if None in events:

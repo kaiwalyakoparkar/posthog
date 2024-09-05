@@ -2,6 +2,7 @@ import dataclasses
 from typing import Literal, Optional, Any, TypedDict, cast
 
 from posthog.constants import AUTOCAPTURE_EVENT
+from posthog.hogql.errors import ExposedHogQLError
 from posthog.hogql.parser import parse_select
 from posthog.hogql.property import property_to_expr
 from posthog.hogql_queries.insights.funnels.funnel_event_query import FunnelEventQuery
@@ -11,7 +12,6 @@ from posthog.hogql_queries.insights.funnels.funnel_unordered_persons import Funn
 from posthog.models.action.action import Action
 from posthog.models.element.element import chain_to_elements
 from posthog.models.event.util import ElementSerializer
-from rest_framework.exceptions import ValidationError
 
 from posthog.hogql import ast
 from posthog.hogql.constants import LimitContext
@@ -359,7 +359,7 @@ class FunnelCorrelationQueryRunner(QueryRunner):
         assert self.correlation_actors_query is not None
 
         if not self.correlation_actors_query.funnelCorrelationPersonEntity:
-            raise ValidationError("No entity for persons specified")
+            raise ExposedHogQLError("No entity for persons specified")
 
         assert isinstance(self.correlation_actors_query.funnelCorrelationPersonEntity, EventsNode)
 
@@ -428,7 +428,7 @@ class FunnelCorrelationQueryRunner(QueryRunner):
         assert self.correlation_actors_query is not None
 
         if not self.correlation_actors_query.funnelCorrelationPropertyValues:
-            raise ValidationError("Property Correlation expects atleast one Property to get persons for")
+            raise ExposedHogQLError("Property Correlation expects at least one Property to get persons for")
 
         target_step = self.context.max_steps
         funnel_persons_query = self.get_funnel_actors_cte()
@@ -543,7 +543,7 @@ class FunnelCorrelationQueryRunner(QueryRunner):
 
     def get_event_property_query(self) -> ast.SelectQuery | ast.SelectUnionQuery:
         if not self.query.funnelCorrelationEventNames:
-            raise ValidationError("Event Property Correlation expects atleast one event name to run correlation on")
+            raise ExposedHogQLError("Event Property Correlation expects at least one event name to run correlation on")
 
         funnel_persons_query = self.get_funnel_actors_cte()
         event_join_query = self._get_events_join_query()
@@ -641,7 +641,7 @@ class FunnelCorrelationQueryRunner(QueryRunner):
 
     def get_properties_query(self) -> ast.SelectQuery | ast.SelectUnionQuery:
         if not self.query.funnelCorrelationNames:
-            raise ValidationError("Property Correlation expects atleast one Property to run correlation on")
+            raise ExposedHogQLError("Property Correlation expects atleast one Property to run correlation on")
 
         funnel_persons_query = self.get_funnel_actors_cte()
         target_step = self.context.max_steps
@@ -829,7 +829,7 @@ class FunnelCorrelationQueryRunner(QueryRunner):
                 if entity.event is not None:
                     events.add(entity.event)
             else:
-                raise ValidationError("Data warehouse nodes are not supported here")
+                raise ExposedHogQLError("Data warehouse nodes are not supported here")
 
         return sorted(events)
 
