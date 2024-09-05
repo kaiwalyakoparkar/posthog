@@ -29,7 +29,8 @@ use tokio::sync::RwLock;
 use tracing::instrument;
 
 // todo: fetch from env
-const QUOTA_LIMITER_CACHE_KEY: &str = "@posthog/quota-limits/";
+pub const QUOTA_LIMITER_CACHE_KEY: &str = "@posthog/quota-limits/";
+pub const OVERFLOW_LIMITER_CACHE_KEY: &str = "@posthog/capture-overflow/";
 
 #[derive(Debug)]
 pub enum QuotaResource {
@@ -57,6 +58,7 @@ pub struct RedisLimiter {
     limited: Arc<RwLock<HashSet<String>>>,
     redis: Arc<dyn Client + Send + Sync>,
     redis_key_prefix: String,
+    limiter_cache_key: String,
     interval: Duration,
     updated: Arc<RwLock<OffsetDateTime>>,
 }
@@ -73,6 +75,7 @@ impl RedisLimiter {
     pub fn new(
         interval: Duration,
         redis: Arc<dyn Client + Send + Sync>,
+        limiter_cache_key: String,
         redis_key_prefix: Option<String>,
     ) -> anyhow::Result<RedisLimiter> {
         let limited = Arc::new(RwLock::new(HashSet::new()));
@@ -87,6 +90,7 @@ impl RedisLimiter {
             updated,
             redis,
             redis_key_prefix: redis_key_prefix.unwrap_or_default(),
+            limiter_cache_key: limiter_cache_key,
         })
     }
 
@@ -94,10 +98,11 @@ impl RedisLimiter {
     async fn fetch_limited(
         client: &Arc<dyn Client + Send + Sync>,
         key_prefix: &str,
+        limiter_cache_key: &str,
         resource: &QuotaResource,
     ) -> anyhow::Result<Vec<String>> {
         let now = OffsetDateTime::now_utc().unix_timestamp();
-        let key = format!("{key_prefix}{QUOTA_LIMITER_CACHE_KEY}{}", resource.as_str());
+        let key = format!("{key_prefix}{limiter_cache_key}{}", resource.as_str());
         client
             .zrangebyscore(key, now.to_string(), String::from("+Inf"))
             .await
@@ -134,7 +139,13 @@ impl RedisLimiter {
             // On prod atm we call this around 15 times per second at peak times, and it usually
             // completes in <1ms.
 
-            let set = Self::fetch_limited(&self.redis, &self.redis_key_prefix, &resource).await;
+            let set = Self::fetch_limited(
+                &self.redis,
+                &self.redis_key_prefix,
+                &self.limiter_cache_key,
+                &resource,
+            )
+            .await;
 
             tracing::debug!("fetched set from redis, caching");
 
@@ -171,6 +182,7 @@ impl RedisLimiter {
 
 #[cfg(test)]
 mod tests {
+    use crate::limiters::redis::QUOTA_LIMITER_CACHE_KEY;
     use std::sync::Arc;
     use time::Duration;
 
@@ -185,8 +197,13 @@ mod tests {
             .zrangebyscore_ret("@posthog/quota-limits/events", vec![String::from("banana")]);
         let client = Arc::new(client);
 
-        let limiter = RedisLimiter::new(Duration::microseconds(1), client, None)
-            .expect("Failed to create billing limiter");
+        let limiter = RedisLimiter::new(
+            Duration::microseconds(1),
+            client,
+            QUOTA_LIMITER_CACHE_KEY.to_string(),
+            None,
+        )
+        .expect("Failed to create billing limiter");
 
         assert!(
             !limiter
@@ -205,14 +222,20 @@ mod tests {
         let client = Arc::new(client);
 
         // Default lookup without prefix fails
-        let limiter = RedisLimiter::new(Duration::microseconds(1), client.clone(), None)
-            .expect("Failed to create billing limiter");
+        let limiter = RedisLimiter::new(
+            Duration::microseconds(1),
+            client.clone(),
+            QUOTA_LIMITER_CACHE_KEY.to_string(),
+            None,
+        )
+        .expect("Failed to create billing limiter");
         assert!(!limiter.is_limited("banana", QuotaResource::Events).await);
 
         // Limiter using the correct prefix
         let prefixed_limiter = RedisLimiter::new(
             Duration::microseconds(1),
             client,
+            QUOTA_LIMITER_CACHE_KEY.to_string(),
             Some("prefix//".to_string()),
         )
         .expect("Failed to create billing limiter");
