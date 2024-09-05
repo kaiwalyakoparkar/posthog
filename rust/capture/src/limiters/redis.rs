@@ -182,7 +182,7 @@ impl RedisLimiter {
 
 #[cfg(test)]
 mod tests {
-    use crate::limiters::redis::QUOTA_LIMITER_CACHE_KEY;
+    use crate::limiters::redis::{OVERFLOW_LIMITER_CACHE_KEY, QUOTA_LIMITER_CACHE_KEY};
     use std::sync::Arc;
     use time::Duration;
 
@@ -193,8 +193,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_dynamic_limited() {
-        let client = MockRedisClient::new()
-            .zrangebyscore_ret("@posthog/capture-overflow/events", vec![String::from("banana")]);
+        let client = MockRedisClient::new().zrangebyscore_ret(
+            "@posthog/capture-overflow/events",
+            vec![String::from("banana")],
+        );
         let client = Arc::new(client);
 
         let limiter = RedisLimiter::new(
