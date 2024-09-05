@@ -194,13 +194,13 @@ mod tests {
     #[tokio::test]
     async fn test_dynamic_limited() {
         let client = MockRedisClient::new()
-            .zrangebyscore_ret("@posthog/quota-limits/events", vec![String::from("banana")]);
+            .zrangebyscore_ret("@posthog/capture-overflow/events", vec![String::from("banana")]);
         let client = Arc::new(client);
 
         let limiter = RedisLimiter::new(
             Duration::microseconds(1),
             client,
-            QUOTA_LIMITER_CACHE_KEY.to_string(),
+            OVERFLOW_LIMITER_CACHE_KEY.to_string(),
             None,
         )
         .expect("Failed to create billing limiter");
