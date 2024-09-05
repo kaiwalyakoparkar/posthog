@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import cast
 
-from rest_framework.exceptions import ValidationError
 
 from posthog.constants import INSIGHT_FUNNELS, FunnelOrderType
 from posthog.hogql.errors import ExposedHogQLError
@@ -1132,7 +1131,7 @@ class TestFunnelUnorderedSteps(ClickhouseTestMixin, APIBaseTest):
         }
 
         query = cast(FunnelsQuery, filter_to_query(filters))
-        self.assertRaises(ValidationError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
+        self.assertRaises(ExposedHogQLError, lambda: FunnelsQueryRunner(query=query, team=self.team).calculate())
 
         # partial windows not allowed for unordered
         filters = {
