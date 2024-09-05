@@ -90,7 +90,7 @@ impl RedisLimiter {
             updated,
             redis,
             redis_key_prefix: redis_key_prefix.unwrap_or_default(),
-            limiter_cache_key: limiter_cache_key,
+            limiter_cache_key,
         })
     }
 
